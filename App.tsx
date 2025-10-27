@@ -1,13 +1,16 @@
 import React, { useState, useCallback } from 'react';
-import type { Room, Person, Bill, CalculationWeights } from './types';
+import type { Room, Person, Bill, CalculationWeights, HistoryEntry } from './types';
 import { BillSetup } from './components/BillSetup';
 import { RoomCard } from './components/RoomCard';
 import { ResultsDisplay } from './components/ResultsDisplay';
-import { PlusIcon, ChevronDownIcon, SunIcon, MoonIcon } from './components/Icons';
+import { PlusIcon, ChevronDownIcon, SunIcon, MoonIcon, SaveIcon, HistoryIcon } from './components/Icons';
 import { useBillCalculation } from './hooks/useBillCalculation';
 import { CalculationExplanation } from './components/CalculationExplanation';
 import { useLocalization } from './context/LocalizationContext';
 import { useTheme } from './context/ThemeContext';
+import { useLocalStorage } from './hooks/useLocalStorage';
+import { HistoryPanel } from './components/HistoryPanel';
+import { SaveToHistoryModal } from './components/SaveToHistoryModal';
 
 const INITIAL_ROOMS: Room[] = [
   {
@@ -51,6 +54,11 @@ const App: React.FC = () => {
   const [rooms, setRooms] = useState<Room[]>(INITIAL_ROOMS);
   const [bill, setBill] = useState<Bill>(INITIAL_BILL);
   const [weights, setWeights] = useState<CalculationWeights>(INITIAL_WEIGHTS);
+  
+  const [history, setHistory] = useLocalStorage<HistoryEntry[]>('bill-calculator-history', []);
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
+
   const [isExplanationOpen, setIsExplanationOpen] = useState(false);
   
   const results = useBillCalculation(rooms, bill, weights);
@@ -119,6 +127,28 @@ const App: React.FC = () => {
     );
   }, []);
 
+  const handleSaveToHistory = (title: string) => {
+    const newEntry: HistoryEntry = {
+      id: `hist_${Date.now()}`,
+      date: new Date().toISOString(),
+      title,
+      state: { rooms, bill, weights },
+    };
+    setHistory(prevHistory => [...prevHistory, newEntry]);
+    setIsSaveModalOpen(false);
+  };
+
+  const handleLoadFromHistory = (entry: HistoryEntry) => {
+    setRooms(entry.state.rooms);
+    setBill(entry.state.bill);
+    setWeights(entry.state.weights);
+    setIsHistoryOpen(false);
+  };
+
+  const handleDeleteFromHistory = (id: string) => {
+    setHistory(prevHistory => prevHistory.filter(entry => entry.id !== id));
+  };
+
 
   return (
     <div className="bg-gray-50 dark:bg-gray-900 min-h-screen text-gray-800 dark:text-gray-200 transition-colors duration-300">
@@ -131,6 +161,15 @@ const App: React.FC = () => {
             <p className="text-gray-500 dark:text-gray-400 mt-1">{t('appSubtitle')}</p>
           </div>
           <div className="flex items-center gap-2 sm:gap-4">
+             <button onClick={() => setIsSaveModalOpen(true)} className="p-2 rounded-full text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title={t('save')}>
+                <SaveIcon className="h-5 w-5"/>
+            </button>
+            <button onClick={() => setIsHistoryOpen(true)} className="p-2 rounded-full text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title={t('historyTitle')}>
+                <HistoryIcon className="h-5 w-5"/>
+            </button>
+
+            <div className="w-px h-6 bg-gray-200 dark:bg-gray-600"></div>
+
              <div className="flex items-center rounded-lg bg-gray-100 dark:bg-gray-700 p-1">
                 <button
                     onClick={() => setLocale('en')}
@@ -199,6 +238,19 @@ const App: React.FC = () => {
           </div>
         </div>
       </main>
+
+      <SaveToHistoryModal 
+        isOpen={isSaveModalOpen}
+        onClose={() => setIsSaveModalOpen(false)}
+        onSave={handleSaveToHistory}
+      />
+      <HistoryPanel 
+        isOpen={isHistoryOpen}
+        onClose={() => setIsHistoryOpen(false)}
+        history={history}
+        onLoad={handleLoadFromHistory}
+        onDelete={handleDeleteFromHistory}
+      />
     </div>
   );
 };

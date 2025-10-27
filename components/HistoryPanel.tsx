@@ -36,11 +36,14 @@ export const HistoryPanel: React.FC<HistoryPanelProps> = ({ isOpen, onClose, his
             ? 'translate-x-0' 
             : (locale === 'fa' ? '-translate-x-full' : 'translate-x-full')
         }`}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="history-panel-title"
       >
         <div className="flex flex-col h-full">
           <header className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-            <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100">{t('historyTitle')}</h2>
-            <button onClick={onClose} className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700">
+            <h2 id="history-panel-title" className="text-xl font-bold text-gray-800 dark:text-gray-100">{t('historyTitle')}</h2>
+            <button onClick={onClose} className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700" aria-label={t('cancel')}>
               <XIcon className="h-6 w-6 text-gray-600 dark:text-gray-300" />
             </button>
           </header>
@@ -51,7 +54,7 @@ export const HistoryPanel: React.FC<HistoryPanelProps> = ({ isOpen, onClose, his
               </div>
             ) : (
               <ul className="space-y-3">
-                {history.map(entry => (
+                {[...history].reverse().map(entry => (
                   <li key={entry.id} className="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg">
                     <div className="flex justify-between items-start">
                       <div>
@@ -61,7 +64,7 @@ export const HistoryPanel: React.FC<HistoryPanelProps> = ({ isOpen, onClose, his
                       <button 
                         onClick={() => onDelete(entry.id)}
                         className="p-1.5 text-gray-400 hover:text-red-500 rounded-full hover:bg-gray-200 dark:hover:bg-gray-600"
-                        aria-label={t('delete')}
+                        aria-label={`${t('delete')} ${entry.title}`}
                       >
                           <TrashIcon className="h-4 w-4" />
                       </button>

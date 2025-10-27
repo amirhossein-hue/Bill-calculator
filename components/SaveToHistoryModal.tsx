@@ -26,7 +26,7 @@ export const SaveToHistoryModal: React.FC<SaveToHistoryModalProps> = ({ isOpen, 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={onClose}>
       <div 
         className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 w-full max-w-md"
         // Prevent clicks inside the modal from closing it
@@ -44,6 +44,7 @@ export const SaveToHistoryModal: React.FC<SaveToHistoryModalProps> = ({ isOpen, 
           placeholder={t('saveModalPlaceholder')}
           className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
           onKeyDown={(e) => e.key === 'Enter' && handleSave()}
+          autoFocus
         />
         <div className="mt-6 flex justify-end gap-3">
           <button
