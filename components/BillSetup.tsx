@@ -5,7 +5,7 @@ import { CalendarIcon } from './Icons';
 
 interface BillSetupProps {
   bill: Bill;
-  onBillChange: (newBill: Bill) => void;
+  onBillChange: (newBill: Bill | ((prevBill: Bill) => Bill)) => void;
   weights: CalculationWeights;
   onWeightsChange: (newWeights: CalculationWeights) => void;
 }
@@ -24,25 +24,30 @@ export const BillSetup: React.FC<BillSetupProps> = ({ bill, onBillChange, weight
 
   useEffect(() => {
     if (startDate && endDate) {
-        try {
-            const start = new Date(startDate);
-            const end = new Date(endDate);
-            if (end >= start) {
-                const diffTime = end.getTime() - start.getTime();
-                const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24)) + 1;
-                onBillChange({ ...bill, daysInPeriod: diffDays });
-            }
-        } catch (error) {
-            console.error("Invalid date format", error);
+      try {
+        const startParts = startDate.split('-').map(Number);
+        const endParts = endDate.split('-').map(Number);
+        // Use Date.UTC to create timezone-agnostic dates for accurate day counting
+        const start = new Date(Date.UTC(startParts[0], startParts[1] - 1, startParts[2]));
+        const end = new Date(Date.UTC(endParts[0], endParts[1] - 1, endParts[2]));
+        
+        if (!isNaN(start.getTime()) && !isNaN(end.getTime()) && end >= start) {
+            const diffTime = end.getTime() - start.getTime();
+            const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24)) + 1;
+            // Use functional update to prevent stale state issues
+            onBillChange(prevBill => ({ ...prevBill, daysInPeriod: diffDays }));
         }
+      } catch (error) {
+        console.error("Invalid date format", error);
+      }
     }
-  }, [startDate, endDate]);
+  }, [startDate, endDate, onBillChange]);
 
   const handleWeightSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const areaPercentage = parseInt(e.target.value, 10);
+    const personDaysPercentage = parseInt(e.target.value, 10);
     onWeightsChange({
-      area: areaPercentage / 100,
-      personDays: (100 - areaPercentage) / 100,
+      personDays: personDaysPercentage / 100,
+      area: (100 - personDaysPercentage) / 100,
     });
   };
 
@@ -130,7 +135,7 @@ export const BillSetup: React.FC<BillSetupProps> = ({ bill, onBillChange, weight
           type="range"
           min="0"
           max="100"
-          value={weights.area * 100}
+          value={weights.personDays * 100}
           onChange={handleWeightSliderChange}
           className="w-full h-2 bg-gray-200 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer"
         />

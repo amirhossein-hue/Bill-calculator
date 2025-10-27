@@ -17,14 +17,18 @@ const PersonRow: React.FC<{
   useEffect(() => {
     if (startDate && endDate) {
       try {
-          const start = new Date(startDate);
-          const end = new Date(endDate);
-          if (end >= start) {
+          const startParts = startDate.split('-').map(Number);
+          const endParts = endDate.split('-').map(Number);
+          // Use Date.UTC to create timezone-agnostic dates for accurate day counting
+          const start = new Date(Date.UTC(startParts[0], startParts[1] - 1, startParts[2]));
+          const end = new Date(Date.UTC(endParts[0], endParts[1] - 1, endParts[2]));
+
+          if (!isNaN(start.getTime()) && !isNaN(end.getTime()) && end >= start) {
               const diffTime = end.getTime() - start.getTime();
               const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24)) + 1;
               onUpdate(person.id, { daysPresent: diffDays });
           }
-      } catch(e) {
+      } catch (e) {
         console.error("Invalid date format", e);
       }
     }
