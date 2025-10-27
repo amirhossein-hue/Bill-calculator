@@ -1,0 +1,5 @@
+{
+  "name": "Bill Calculator",
+  "description": "A beautiful and practical application to calculate and split shared bills. Features dark mode and supports multiple languages and currencies.",
+  "requestFramePermissions": []
+}
